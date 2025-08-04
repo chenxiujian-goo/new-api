@@ -1,0 +1,29 @@
+# ---- 1. 前端开发环境 ----
+FROM node:18-bullseye AS web
+WORKDIR /workspace/web
+COPY web/package*.json ./
+RUN npm ci --include=dev
+COPY web/ ./
+
+# ---- 2. Go 后端开发环境 ----
+FROM golang:1.23.4-bullseye
+WORKDIR /workspace
+
+# 缓存依赖层
+COPY go.mod go.sum ./
+RUN go mod download
+
+# 源码
+COPY . .
+
+# 把前端目录带进来
+COPY --from=web /workspace/web ./web
+
+# 常用工具
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+# 暴露端口（按项目实际端口修改）
+EXPOSE 5173 3000
+
+# 同时启动前后端
+CMD ["sh","-c","cd web && npm run dev & go run main.go"]
