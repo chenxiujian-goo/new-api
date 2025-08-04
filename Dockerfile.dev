@@ -6,7 +6,7 @@ RUN npm ci --include=dev
 COPY web/ ./
 
 # ---- 2. Go 后端开发环境 ----
-FROM golang:1.23.4-bullseye
+FROM golang:1.22-bullseye
 WORKDIR /workspace
 
 # 缓存依赖层
