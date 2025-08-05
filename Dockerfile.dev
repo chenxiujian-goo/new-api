@@ -1,29 +1,37 @@
-# ---- 1. 前端开发环境 ----
-FROM node:18-bullseye AS web
-WORKDIR /workspace/web
+# 阶段1：构建前端
+FROM node:18-alpine AS web-builder
+WORKDIR /app/web
 COPY web/package*.json ./
-RUN npm ci --include=dev
+RUN npm ci --prefer-offline
 COPY web/ ./
+RUN npm run build  # 如果有构建步骤
 
-# ---- 2. Go 后端开发环境 ----
-FROM golang:1.22-bullseye
-WORKDIR /workspace
-
-# 缓存依赖层
+# 阶段2：构建Go后端
+FROM golang:1.23.4-alpine AS go-builder
+WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
-
-# 源码
 COPY . .
+RUN go build -o main .
 
-# 把前端目录带进来
-COPY --from=web /workspace/web ./web
+# 阶段3：最终开发镜像（包含运行时和工具）
+FROM golang:1.23.4-alpine
+WORKDIR /app
 
-# 常用工具
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+# 安装Node.js（用于前端开发）
+RUN apk add --no-cache nodejs npm
 
-# 暴露端口（按项目实际端口修改）
-EXPOSE 5173 3000
+# 复制后端二进制
+COPY --from=go-builder /app/main .
 
-# 同时启动前后端
-CMD ["sh","-c","cd web && npm run dev & go run main.go"]
+# 复制前端代码（或构建产物）
+COPY --from=web-builder /app/web ./web
+
+# 安装开发工具（如air热重载）
+RUN go install github.com/cosmtrek/air@latest
+
+# 暴露端口（根据实际需求调整）
+EXPOSE 3000
+
+# 默认启动命令（可覆盖）
+CMD ["air", "-c", ".air.toml"]
