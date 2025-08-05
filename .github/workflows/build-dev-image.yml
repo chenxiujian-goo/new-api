@@ -31,6 +31,6 @@ jobs:
           context: .
           file: ./Dockerfile.dev
           push: true
-          tags: ${{ env.IMAGE_NAME }}:latest
+          tags: ${{ env.IMAGE_NAME }}:v0
           cache-from: type=gha
           cache-to: type=gha,mode=max
