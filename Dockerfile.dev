@@ -23,7 +23,7 @@ WORKDIR /app
 RUN apk add --no-cache nodejs npm
 
 # 复制后端二进制
-COPY --from=go-builder /app/main .
+COPY . .
 
 # 复制前端代码（或构建产物）
 COPY --from=web-builder /app/web ./web
