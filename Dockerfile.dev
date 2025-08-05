@@ -29,7 +29,7 @@ COPY --from=go-builder /app/main .
 COPY --from=web-builder /app/web ./web
 
 # 安装兼容 Go 1.23 的 air 热重载工具
-RUN go install github.com/cosmtrek/air@v1.61.5
+RUN go install github.com/air-verse/air@v1.61.5
 
 # 暴露端口（根据实际需求调整）
 EXPOSE 3000
