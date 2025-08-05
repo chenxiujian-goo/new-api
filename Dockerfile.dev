@@ -1,12 +1,16 @@
-# 阶段1：构建前端
+# ---------------------------------------------
+# 阶段1：构建前端产物（保持 node:18-alpine，体积小）
+# ---------------------------------------------
 FROM node:18-alpine AS web-builder
 WORKDIR /app/web
 COPY web/package*.json ./
 RUN npm install --legacy-peer-deps --prefer-offline
 COPY web/ ./
-RUN npm run build  # 如果有构建步骤
+RUN npm run build
 
-# 阶段2：构建Go后端
+# ---------------------------------------------
+# 阶段2：构建 Go 后端（保持 golang:1.23.4-alpine）
+# ---------------------------------------------
 FROM golang:1.23.4-alpine AS go-builder
 WORKDIR /app
 COPY go.mod go.sum ./
@@ -15,24 +19,42 @@ COPY . .
 COPY --from=web-builder /app/web/dist ./web/dist
 RUN go build -o main .
 
-# 阶段3：最终开发镜像（包含运行时和工具）
-FROM golang:1.23.4-alpine
+# ---------------------------------------------
+# 阶段3：最终开发镜像（基于 ubuntu:20.04）
+# ---------------------------------------------
+FROM ubuntu:20.04
 WORKDIR /app
 
-# 安装Node.js（用于前端开发）
-RUN apk add --no-cache nodejs npm
+# 避免交互提示
+ENV DEBIAN_FRONTEND=noninteractive
 
-# 复制后端二进制
+# 1. 系统工具 + Node.js + npm
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        git \
+        vim \
+        wget \
+        build-essential \
+        nodejs \
+        npm && \
+    rm -rf /var/lib/apt/lists/*
+
+# 2. 安装 Go（apt 里的 1.23.4 可能滞后，用官方二进制）
+ARG GO_VERSION=1.23.4
+RUN curl -L https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz | tar -xz -C /usr/local && \
+    ln -s /usr/local/go/bin/go /usr/local/bin/go && \
+    ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+
+# 3. 复制完整 Go 源码
 COPY . .
 
-# 复制前端代码（或构建产物）
+# 4. 复制完整前端源码
 COPY --from=web-builder /app/web ./web
 
-# 安装兼容 Go 1.23 的 air 热重载工具
+# 5. 安装 air（兼容 Go 1.23）
 RUN go install github.com/air-verse/air@v1.61.5
 
-# 暴露端口（根据实际需求调整）
 EXPOSE 3000
-
-# 默认启动命令（可覆盖）
 CMD ["air", "-c", ".air.toml"]
