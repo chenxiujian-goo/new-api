@@ -12,6 +12,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
+COPY --from=web-builder /app/web/dist ./web/dist
 RUN go build -o main .
 
 # 阶段3：最终开发镜像（包含运行时和工具）
