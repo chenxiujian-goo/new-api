@@ -1,7 +1,7 @@
 # ---------------------------------------------
-# 阶段1：构建前端产物（保持 node:18-alpine，体积小）
+# 阶段1：构建前端产物（固定 Node 22.18.0）
 # ---------------------------------------------
-FROM node:18-alpine AS web-builder
+FROM node:22.18.0-alpine AS web-builder
 WORKDIR /app/web
 COPY web/package*.json ./
 RUN npm install --legacy-peer-deps --prefer-offline
@@ -9,7 +9,7 @@ COPY web/ ./
 RUN npm run build
 
 # ---------------------------------------------
-# 阶段2：构建 Go 后端（保持 golang:1.23.4-alpine）
+# 阶段2：构建 Go 后端
 # ---------------------------------------------
 FROM golang:1.23.4-alpine AS go-builder
 WORKDIR /app
@@ -20,48 +20,43 @@ COPY --from=web-builder /app/web/dist ./web/dist
 RUN go build -o main .
 
 # ---------------------------------------------
-# 阶段3：最终开发镜像（基于 ubuntu:20.04）
+# 阶段3：最终开发镜像（Ubuntu 20.04）
 # ---------------------------------------------
 FROM ubuntu:20.04
 WORKDIR /app
-
-# 避免交互提示
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. 系统工具 + Node.js + npm + Python 3.10
+# 1. 系统工具 & Python 3.10
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        ca-certificates \
-        curl \
-        git \
-        vim \
-        wget \
-        build-essential \
-        software-properties-common && \
+        ca-certificates curl git vim wget build-essential software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-        nodejs \
-        npm \
-        python3.10 \
-        python3.10-venv \
-        python3.10-distutils \
-        python3-pip && \
+        python3.10 python3.10-venv python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# 2. 安装 Go（官方二进制）
+# 2. 安装 Node.js 22.18.0（官方二进制，固定 URL）
+ARG NODE_VERSION=22.18.0
+RUN curl -fSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz | \
+    tar -xJ -C /usr/local --strip-components=1 && \
+    ln -sf /usr/local/bin/{node,npm,npx} /usr/bin/
+
+# 3. 安装 Go 1.23.4（官方二进制，固定 URL）
 ARG GO_VERSION=1.23.4
-RUN curl -L https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz | tar -xz -C /usr/local && \
-    ln -s /usr/local/go/bin/go /usr/local/bin/go && \
-    ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
+RUN curl -fSL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz | \
+    tar -xz -C /usr/local && \
+    ln -sf /usr/local/go/bin/go /usr/local/bin/go
 
-# 3. 复制完整 Go 源码
+# 4. 建立 python / pip 软链接
+RUN ln -sf /usr/bin/python3.10 /usr/bin/python && \
+    ln -sf /usr/bin/pip3 /usr/bin/pip
+
+# 5. 复制完整源码
 COPY . .
-
-# 4. 复制完整前端源码
 COPY --from=web-builder /app/web ./web
 
-# 5. 安装 air（兼容 Go 1.23）
+# 6. 安装 air
 RUN go install github.com/air-verse/air@v1.61.5
 
 EXPOSE 3000
