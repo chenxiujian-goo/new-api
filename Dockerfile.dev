@@ -9,7 +9,7 @@ COPY web/ ./
 RUN npm run build
 
 # ---------------------------------------------
-# 阶段2：构建 Go 后端
+# 阶段2：构建 Go 后端（含模块缓存）
 # ---------------------------------------------
 FROM golang:1.23.4-alpine AS go-builder
 WORKDIR /app
@@ -30,8 +30,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates curl git vim wget build-essential \
-        python3.10 python3.10-venv python3-pip \
-        nodejs npm && \
+        python3.10 python3.10-venv python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
 # 2. 建立软链接
@@ -50,11 +49,14 @@ RUN curl -fSL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz | \
     tar -xz -C /usr/local && \
     ln -sf /usr/local/go/bin/go /usr/local/bin/go
 
-# 5. 复制源码
+# 5. 复制完整源码
 COPY . .
 COPY --from=web-builder /app/web ./web
 
-# 6. 安装 air
+# 6. 复制 Go 模块缓存（方案 A）
+COPY --from=go-builder /go/pkg/mod /root/go/pkg/mod
+
+# 7. 安装 air
 RUN go install github.com/air-verse/air@v1.61.5
 
 EXPOSE 3000
