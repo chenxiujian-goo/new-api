@@ -28,7 +28,7 @@ WORKDIR /app
 # 避免交互提示
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. 系统工具 + Node.js + npm
+# 1. 系统工具 + Node.js + npm + Python 3.10
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -37,11 +37,19 @@ RUN apt-get update && \
         vim \
         wget \
         build-essential \
+        software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
         nodejs \
-        npm && \
+        npm \
+        python3.10 \
+        python3.10-venv \
+        python3.10-distutils \
+        python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-# 2. 安装 Go（apt 里的 1.23.4 可能滞后，用官方二进制）
+# 2. 安装 Go（官方二进制）
 ARG GO_VERSION=1.23.4
 RUN curl -L https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz | tar -xz -C /usr/local && \
     ln -s /usr/local/go/bin/go /usr/local/bin/go && \
