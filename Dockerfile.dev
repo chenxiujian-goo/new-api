@@ -26,31 +26,37 @@ FROM ubuntu:20.04
 WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. 系统工具 & Python 3.10
+# 1. 一次性安装所有必需软件（官方源即可）
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        ca-certificates curl git vim wget build-essential software-properties-common && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-        python3.10 python3.10-venv python3-pip && \
+        ca-certificates \
+        curl \
+        git \
+        vim \
+        wget \
+        build-essential \
+        python3.10 \
+        python3.10-venv \
+        python3-pip \
+        nodejs \
+        npm && \
     rm -rf /var/lib/apt/lists/*
 
-# 2. 安装 Node.js 22.18.0（官方二进制，固定 URL）
+# 2. 建立软链接（python -> python3，pip -> pip3）
+RUN ln -sf /usr/bin/python3.10 /usr/bin/python && \
+    ln -sf /usr/bin/pip3 /usr/bin/pip
+
+# 3. 安装官方 Node.js 22.18.0（覆盖 apt 默认的 10.x）
 ARG NODE_VERSION=22.18.0
 RUN curl -fSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz | \
     tar -xJ -C /usr/local --strip-components=1 && \
     ln -sf /usr/local/bin/{node,npm,npx} /usr/bin/
 
-# 3. 安装 Go 1.23.4（官方二进制，固定 URL）
+# 4. 安装 Go 1.23.4（官方二进制）
 ARG GO_VERSION=1.23.4
 RUN curl -fSL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz | \
     tar -xz -C /usr/local && \
     ln -sf /usr/local/go/bin/go /usr/local/bin/go
-
-# 4. 建立 python / pip 软链接
-RUN ln -sf /usr/bin/python3.10 /usr/bin/python && \
-    ln -sf /usr/bin/pip3 /usr/bin/pip
 
 # 5. 复制完整源码
 COPY . .
