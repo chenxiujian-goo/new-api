@@ -40,8 +40,8 @@ jobs:
           load: true  
           tags: new-api-custom:latest  
           build-args: |  
-            VITE_BASE_PATH=/ai-gate
-            VITE_REACT_APP_SERVER_URL=https://aiservice.byd.com/ai-gate
+            VITE_BASE_PATH=${{ github.event.inputs.vite_base_path }}  
+            VITE_REACT_APP_SERVER_URL=${{ github.event.inputs.vite_server_url }}  
           cache-from: type=gha  
           cache-to: type=gha,mode=max  
   
