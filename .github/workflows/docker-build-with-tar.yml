@@ -1,0 +1,75 @@
+name: Build Docker Image with TAR Export  
+  
+on:  
+  workflow_dispatch:  
+    inputs:  
+      reason:  
+        description: 'Build reason'  
+        required: false  
+        default: 'Manual build'  
+  
+jobs:  
+  build-and-export:  
+    name: Build Docker image and export as TAR  
+    runs-on: ubuntu-latest  
+      
+    steps:  
+      - name: Check out the repo  
+        uses: actions/checkout@v4  
+  
+      - name: Save version info  
+        run: |  
+          echo "manual-$(date +'%Y%m%d')-$(git rev-parse --short HEAD)" > VERSION  
+  
+      - name: Set up Docker Buildx  
+        uses: docker/setup-buildx-action@v3  
+  
+      - name: Build Docker image  
+        uses: docker/build-push-action@v5  
+        with:  
+          context: .  
+          platforms: linux/amd64  
+          load: true  
+          tags: new-api-custom:latest  
+          cache-from: type=gha  
+          cache-to: type=gha,mode=max  
+  
+      - name: Export Docker image to TAR  
+        run: |  
+          docker save new-api-custom:latest -o new-api-custom.tar  
+          gzip new-api-custom.tar  
+  
+      - name: Test Docker image  
+        run: |  
+          echo "Testing the built image..."  
+          docker run --rm -d --name test-container -p 3000:3000 new-api-custom:latest  
+          sleep 10  
+          # 检查容器是否正在运行  
+          if docker ps | grep test-container; then  
+            echo "Container is running successfully"  
+            docker logs test-container  
+          else  
+            echo "Container failed to start"  
+            exit 1  
+          fi  
+          docker stop test-container  
+  
+      - name: Upload TAR file as artifact  
+        uses: actions/upload-artifact@v4  
+        with:  
+          name: new-api-docker-image  
+          path: new-api-custom.tar.gz  
+          retention-days: 30  
+  
+      - name: Create release info  
+        run: |  
+          echo "Docker image built successfully!" > release-info.txt  
+          echo "Image size: $(du -h new-api-custom.tar.gz | cut -f1)" >> release-info.txt  
+          echo "Build date: $(date)" >> release-info.txt  
+          echo "Commit: $(git rev-parse HEAD)" >> release-info.txt  
+  
+      - name: Upload release info  
+        uses: actions/upload-artifact@v4  
+        with:  
+          name: build-info  
+          path: release-info.txt
