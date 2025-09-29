@@ -1,11 +1,20 @@
 FROM oven/bun:latest AS builder  
   
+# 接收构建参数  
+ARG VITE_BASE_PATH=/  
+ARG VITE_REACT_APP_SERVER_URL=  
+  
 WORKDIR /build  
 COPY web/package.json .  
 COPY web/bun.lock .  
 RUN bun install  
 COPY ./web .  
 COPY ./VERSION .  
+  
+# 在构建时设置环境变量  
+ENV VITE_BASE_PATH=${VITE_BASE_PATH}  
+ENV VITE_REACT_APP_SERVER_URL=${VITE_REACT_APP_SERVER_URL}  
+  
 RUN DISABLE_ESLINT_PLUGIN='true' VITE_REACT_APP_VERSION=$(cat VERSION) bun run build  
   
 FROM golang:alpine AS builder2  
