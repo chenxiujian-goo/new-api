@@ -60,7 +60,7 @@ root.render(
     <StatusProvider>
       <UserProvider>
         <BrowserRouter
-          basename={import.meta.env.VITE_BASE_PATH || '/'},
+          basename={import.meta.env.VITE_BASE_PATH || '/'}
           future={{
             v7_startTransition: true,
             v7_relativeSplatPath: true,
