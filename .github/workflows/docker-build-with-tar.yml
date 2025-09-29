@@ -7,6 +7,14 @@ on:
         description: 'Build reason'  
         required: false  
         default: 'Manual build'  
+      vite_base_path:  
+        description: 'VITE_BASE_PATH (e.g., /api or /)'  
+        required: false  
+        default: '/'  
+      vite_server_url:  
+        description: 'VITE_REACT_APP_SERVER_URL (e.g., https://api.example.com)'  
+        required: false  
+        default: ''  
   
 jobs:  
   build-and-export:  
@@ -31,6 +39,9 @@ jobs:
           platforms: linux/amd64  
           load: true  
           tags: new-api-custom:latest  
+          build-args: |  
+            VITE_BASE_PATH=/ai-gate
+            VITE_REACT_APP_SERVER_URL=https://aiservice.byd.com/ai-gate
           cache-from: type=gha  
           cache-to: type=gha,mode=max  
   
@@ -44,7 +55,6 @@ jobs:
           echo "Testing the built image..."  
           docker run --rm -d --name test-container -p 3000:3000 new-api-custom:latest  
           sleep 10  
-          # 检查容器是否正在运行  
           if docker ps | grep test-container; then  
             echo "Container is running successfully"  
             docker logs test-container  
@@ -67,6 +77,8 @@ jobs:
           echo "Image size: $(du -h new-api-custom.tar.gz | cut -f1)" >> release-info.txt  
           echo "Build date: $(date)" >> release-info.txt  
           echo "Commit: $(git rev-parse HEAD)" >> release-info.txt  
+          echo "VITE_BASE_PATH: ${{ github.event.inputs.vite_base_path }}" >> release-info.txt  
+          echo "VITE_REACT_APP_SERVER_URL: ${{ github.event.inputs.vite_server_url }}" >> release-info.txt  
   
       - name: Upload release info  
         uses: actions/upload-artifact@v4  
