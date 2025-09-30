@@ -45,38 +45,32 @@ export const AuthRedirect = ({ children }) => {
   return children;
 };
 
-function PrivateRoute({ children }) {
+function PrivateRoute({ children }) {  
   if (!localStorage.getItem('user')) {  
     const basePath = import.meta.env.VITE_BASE_PATH || '/';  
-    // 规范化路径，移除末尾斜杠  
-    const normalizedBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;  
-    const loginPath = normalizedBasePath === '' ? '/login' : `${normalizedBasePath}/login`;  
-    console.log('登录路由：', loginPath);
-    console.log('VITE_BASE_PATH：', import.meta.env.VITE_BASE_PATH);
+    const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
     return <Navigate to={loginPath} state={{ from: history.location }} />;  
   }  
   return children;  
 }
 
-export function AdminRoute({ children }) {
-  const raw = localStorage.getItem('user');
+export function AdminRoute({ children }) {  
+  const raw = localStorage.getItem('user');  
   if (!raw) {  
     const basePath = import.meta.env.VITE_BASE_PATH || '/';  
-    const normalizedBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;  
-    const loginPath = normalizedBasePath === '' ? '/login' : `${normalizedBasePath}/login`;  
+    const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
     return <Navigate to={loginPath} state={{ from: history.location }} />;  
   }  
-  try {
-    const user = JSON.parse(raw);
-    if (user && typeof user.role === 'number' && user.role >= 10) {
-      return children;
-    }
-  } catch (e) {
-    // ignore
-  }
+  try {  
+    const user = JSON.parse(raw);  
+    if (user && typeof user.role === 'number' && user.role >= 10) {  
+      return children;  
+    }  
+  } catch (e) {  
+    // ignore  
+  }  
   const basePath = import.meta.env.VITE_BASE_PATH || '/';  
-  const normalizedBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;  
-  const forbiddenPath = normalizedBasePath === '' ? '/forbidden' : `${normalizedBasePath}/forbidden`;  
+  const forbiddenPath = basePath === '/' ? '/forbidden' : `${basePath}/forbidden`;  
   return <Navigate to={forbiddenPath} replace />;  
 }
 
