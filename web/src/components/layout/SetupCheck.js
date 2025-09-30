@@ -25,14 +25,15 @@ const SetupCheck = ({ children }) => {
   const [statusState] = useContext(StatusContext);
   const location = useLocation();
 
-  useEffect(() => {
-    if (
-      statusState?.status?.setup === false &&
-      location.pathname !== '/setup'
-    ) {
-      window.location.href = '/setup';
-    }
-  }, [statusState?.status?.setup, location.pathname]);
+  // 如果系统未初始化，使用 Navigate 组件进行跳转  
+  if (  
+    statusState?.status?.setup === false &&  
+    location.pathname !== '/setup'  
+  ) {  
+    const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+    const setupPath = basePath === '/' ? '/setup' : `${basePath}/setup`;  
+    return <Navigate to={setupPath} replace />;  
+  }  
 
   return children;
 };
