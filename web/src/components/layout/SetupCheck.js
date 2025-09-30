@@ -30,8 +30,7 @@ const SetupCheck = ({ children }) => {
     statusState?.status?.setup === false &&  
     location.pathname !== '/setup'  
   ) {  
-    const basePath = import.meta.env.VITE_BASE_PATH || '/';  
-    const setupPath = basePath === '/' ? '/setup' : `${basePath}/setup`;  
+    const setupPath = '/setup';  
     return <Navigate to={setupPath} replace />;  
   }  
 
