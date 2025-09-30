@@ -86,7 +86,9 @@ const SetupWizard = () => {
 
         // If setup is already completed, redirect to home
         if (data.status) {
-          window.location.href = '/';
+          const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+          const homePath = basePath === '/' ? '/' : basePath;  
+          window.location.href = homePath;  
           return;
         }
 
@@ -209,9 +211,11 @@ const SetupWizard = () => {
 
         if (success) {
           showNotice(t('系统初始化成功，正在跳转...'));
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
+          setTimeout(() => {  
+            const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+            const homePath = basePath === '/' ? '/' : basePath;  
+            window.location.href = homePath;  
+          }, 1500); 
         } else {
           showError(message || t('初始化失败，请重试'));
         }
