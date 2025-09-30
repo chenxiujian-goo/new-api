@@ -49,7 +49,7 @@ function PrivateRoute({ children }) {
   if (!localStorage.getItem('user')) {  
     const basePath = import.meta.env.VITE_BASE_PATH || '/';  
     const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
-    return <Navigate to={loginPath} state={{ from: history.location }} />;  
+    return <Navigate to='login' state={{ from: history.location }} />;  
   }  
   return children;  
 }
@@ -59,7 +59,7 @@ export function AdminRoute({ children }) {
   if (!raw) {  
     const basePath = import.meta.env.VITE_BASE_PATH || '/';  
     const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
-    return <Navigate to={loginPath} state={{ from: history.location }} />;  
+    return <Navigate to='login' state={{ from: history.location }} />;  
   }  
   try {  
     const user = JSON.parse(raw);  
