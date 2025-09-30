@@ -38,7 +38,7 @@ export const AuthRedirect = ({ children }) => {
   if (user) {  
     const basePath = import.meta.env.VITE_BASE_PATH || '/';  
     const normalizedBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;  
-    const consolePath = normalizedBasePath === '' ? '/console' : `${normalizedBasePath}/console`;  
+    const consolePath = '/console';
     return <Navigate to={consolePath} replace />;  
   }
 
