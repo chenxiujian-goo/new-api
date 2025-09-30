@@ -39,6 +39,7 @@ import {
   IconCopy,
 } from '@douyinfe/semi-icons';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import NoticeModal from '../../components/layout/NoticeModal';
 import {
   Moonshot,
@@ -80,7 +81,22 @@ const Home = () => {
   const endpointItems = API_ENDPOINTS.map((e) => ({ value: e }));
   const [endpointIndex, setEndpointIndex] = useState(0);
   const isChinese = i18n.language.startsWith('zh');
+  const navigate = useNavigate();
 
+  const handleGetApiKey = () => {  
+  // 检查登录状态  
+  const user = localStorage.getItem('user');  
+  if (user) {  
+    // 已登录，直接跳转到控制台  
+    navigate('/console');  
+  } else {  
+    // 未登录，手动构建带前缀的登录路径  
+    const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+    const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
+    window.location.href = loginPath;  
+  }  
+};
+  
   const displayHomePageContent = async () => {
     setHomePageContent(localStorage.getItem('home_page_content') || '');
     const res = await API.get('/api/home_page_content');
@@ -221,7 +237,17 @@ const Home = () => {
 
                 {/* 操作按钮 */}
                 <div className='flex flex-row gap-4 justify-center items-center'>
-                  <Link to='/console'>
+                  <Button  
+                    theme='solid'  
+                    type='primary'  
+                    size={isMobile ? 'default' : 'large'}  
+                    className='!rounded-3xl px-8 py-2'  
+                    icon={<IconPlay />}  
+                    onClick={handleGetApiKey}  
+                  >  
+                    {t('获取密钥')}  
+                  </Button>
+                  {/* <Link to='/console'>
                     <Button
                       theme='solid'
                       type='primary'
@@ -231,7 +257,7 @@ const Home = () => {
                     >
                       {t('获取密钥')}
                     </Button>
-                  </Link>
+                  </Link> */}
                   {isDemoSiteMode && statusState?.status?.version ? (
                     <Button
                       size={isMobile ? 'default' : 'large'}
