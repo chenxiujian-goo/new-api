@@ -35,8 +35,11 @@ export function authHeader() {
 export const AuthRedirect = ({ children }) => {
   const user = localStorage.getItem('user');
 
-  if (user) {
-    return <Navigate to='/console' replace />;
+  if (user) {  
+    const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+    const normalizedBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;  
+    const consolePath = normalizedBasePath === '' ? '/console' : `${normalizedBasePath}/console`;  
+    return <Navigate to={consolePath} replace />;  
   }
 
   return children;
@@ -45,7 +48,11 @@ export const AuthRedirect = ({ children }) => {
 function PrivateRoute({ children }) {
   if (!localStorage.getItem('user')) {  
     const basePath = import.meta.env.VITE_BASE_PATH || '/';  
-    const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
+    // 规范化路径，移除末尾斜杠  
+    const normalizedBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;  
+    const loginPath = normalizedBasePath === '' ? '/login' : `${normalizedBasePath}/login`;  
+    console.log('登录路由：', loginPath);
+    console.log('VITE_BASE_PATH：', import.meta.env.VITE_BASE_PATH);
     return <Navigate to={loginPath} state={{ from: history.location }} />;  
   }  
   return children;  
@@ -55,9 +62,10 @@ export function AdminRoute({ children }) {
   const raw = localStorage.getItem('user');
   if (!raw) {  
     const basePath = import.meta.env.VITE_BASE_PATH || '/';  
-    const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
+    const normalizedBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;  
+    const loginPath = normalizedBasePath === '' ? '/login' : `${normalizedBasePath}/login`;  
     return <Navigate to={loginPath} state={{ from: history.location }} />;  
-  } 
+  }  
   try {
     const user = JSON.parse(raw);
     if (user && typeof user.role === 'number' && user.role >= 10) {
@@ -66,7 +74,10 @@ export function AdminRoute({ children }) {
   } catch (e) {
     // ignore
   }
-  return <Navigate to='/forbidden' replace />;
+  const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+  const normalizedBasePath = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;  
+  const forbiddenPath = normalizedBasePath === '' ? '/forbidden' : `${normalizedBasePath}/forbidden`;  
+  return <Navigate to={forbiddenPath} replace />;  
 }
 
 export { PrivateRoute };
