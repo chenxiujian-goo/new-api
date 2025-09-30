@@ -221,7 +221,7 @@ const Home = () => {
 
                 {/* 操作按钮 */}
                 <div className='flex flex-row gap-4 justify-center items-center'>
-                  <Link to='/console'>
+                  <Link to={`${import.meta.env.VITE_BASE_PATH || '/'}/console`.replace(/\/+/g, '/')}>
                     <Button
                       theme='solid'
                       type='primary'
