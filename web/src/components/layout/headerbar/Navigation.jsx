@@ -55,10 +55,16 @@ const Navigation = ({
 
       let targetPath = link.to;
       if (link.itemKey === 'console' && !userState.user) {
-        targetPath = '/login';
+        // targetPath = '/login';
+        const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+        const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
+        targetPath = loginPath;
       }
       if (link.itemKey === 'pricing' && pricingRequireAuth && !userState.user) {
-        targetPath = '/login';
+        // targetPath = '/login';
+        const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+        const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
+        targetPath = loginPath;
       }
 
       return (
