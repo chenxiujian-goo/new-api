@@ -142,7 +142,10 @@ export const useHeaderBar = ({ onMobileMenuToggle, drawerOpen }) => {
     showSuccess(t('注销成功!'));
     userDispatch({ type: 'logout' });
     localStorage.removeItem('user');
-    navigate('/login');
+    // navigate('/login');
+    const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+    const homePath = basePath === '/' ? '/' : basePath;  
+    window.location.href = homePath; 
   }, [navigate, t, userDispatch]);
 
   const handleLanguageChange = useCallback(
