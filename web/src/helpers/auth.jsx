@@ -43,17 +43,21 @@ export const AuthRedirect = ({ children }) => {
 };
 
 function PrivateRoute({ children }) {
-  if (!localStorage.getItem('user')) {
-    return <Navigate to='/login' state={{ from: history.location }} />;
-  }
-  return children;
+  if (!localStorage.getItem('user')) {  
+    const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+    const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
+    return <Navigate to={loginPath} state={{ from: history.location }} />;  
+  }  
+  return children;  
 }
 
 export function AdminRoute({ children }) {
   const raw = localStorage.getItem('user');
-  if (!raw) {
-    return <Navigate to='/login' state={{ from: history.location }} />;
-  }
+  if (!raw) {  
+    const basePath = import.meta.env.VITE_BASE_PATH || '/';  
+    const loginPath = basePath === '/' ? '/login' : `${basePath}/login`;  
+    return <Navigate to={loginPath} state={{ from: history.location }} />;  
+  } 
   try {
     const user = JSON.parse(raw);
     if (user && typeof user.role === 'number' && user.role >= 10) {
