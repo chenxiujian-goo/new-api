@@ -1,0 +1,63 @@
+# ---------------------------------------------
+# 阶段1：构建前端产物（固定 Node 20.18.3）
+# ---------------------------------------------
+FROM node:20.18.3-alpine AS web-builder
+WORKDIR /app/web
+COPY web/package*.json ./
+RUN npm install --legacy-peer-deps --prefer-offline
+COPY web/ ./
+RUN npm run build
+
+# ---------------------------------------------
+# 阶段2：构建 Go 后端（含模块缓存）
+# ---------------------------------------------
+FROM golang:1.25.0-linux-amd64-alpine AS go-builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+COPY --from=web-builder /app/web/dist ./web/dist
+RUN go build -o main .
+
+# ---------------------------------------------
+# 阶段3：最终开发镜像（Ubuntu 22.04）
+# ---------------------------------------------
+FROM ubuntu:22.04
+WORKDIR /app
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 1. 一次性安装所有软件包（官方源自带 3.10）
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates curl git vim wget build-essential \
+        python3.10 python3.10-venv python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# 2. 建立软链接
+RUN ln -sf /usr/bin/python3.10 /usr/bin/python && \
+    ln -sf /usr/bin/pip3 /usr/bin/pip
+
+# 3. 安装 Node 20.18.3（官方二进制，覆盖 apt 默认）
+ARG NODE_VERSION=20.18.3
+RUN curl -fSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz | \
+    tar -xJ -C /usr/local --strip-components=1 && \
+    ln -sf /usr/local/bin/{node,npm,npx} /usr/bin/
+
+# 4. 安装 Go 1.25.0（官方二进制）
+ARG GO_VERSION=1.25.0
+RUN curl -fSL https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz | \
+    tar -xz -C /usr/local && \
+    ln -sf /usr/local/go/bin/go /usr/local/bin/go
+
+# 5. 复制完整源码
+COPY . .
+COPY --from=web-builder /app/web ./web
+
+# 6. 复制 Go 模块缓存
+COPY --from=go-builder /go/pkg/mod /root/go/pkg/mod
+
+# 7. 安装 air
+RUN go install github.com/air-verse/air@v1.61.5
+
+EXPOSE 3000
+CMD ["air", "-c", ".air.toml"]
