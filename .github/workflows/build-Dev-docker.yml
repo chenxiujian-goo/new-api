@@ -1,0 +1,45 @@
+name: Build Dev Image & Export Tar
+
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: new-api-dev        # 仅本地使用，无需推送
+
+jobs:
+  build-and-export:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.dev
+          tags: ${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true                 # 让镜像直接出现在本地 docker images
+
+      - name: Smoke test（20s）
+        run: |
+          docker run --rm -d --name test-dev ${{ env.IMAGE_NAME }}:latest
+          sleep 20
+          docker stop test-dev
+
+      - name: Export image to tar
+        run: |
+          docker save ${{ env.IMAGE_NAME }}:latest | gzip > dev-image.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-image-tar
+          path: dev-image.tar.gz
+          retention-days: 7
